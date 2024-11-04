@@ -1,13 +1,10 @@
-Here's a detailed `README.md` file for your GitHub Actions workflow task, incorporating attractive icons to enhance readability and engagement.
-
-```markdown
 # 🚀 CI/CD Pipeline for Flask Application using GitHub Actions
 
 This project sets up a Continuous Integration and Continuous Deployment (CI/CD) pipeline for a Flask application using GitHub Actions. The pipeline automatically tests, merges, and deploys code to an EC2 instance whenever changes are pushed to the `dev` branch.
 
 ## 📁 Project Structure
 
-```
+```gra
 .
 ├── .github
 │   └── workflows
