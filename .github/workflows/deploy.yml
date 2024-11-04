@@ -13,7 +13,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
         with:
-          ref: dev  # Work with the dev branch
+          ref: dev
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -25,18 +25,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install flask pytest requests  # Install dependencies for app and testing
 
+      - name: Start Flask Application
+        run: |
+          nohup python app.py &
+          sleep 5  # Give the app time to start
+
       - name: Run Tests
         run: |
-          pytest tests.py  # Run tests on GitHub runner
-
-      - name: Merge to Main if Tests Pass
-        if: success()  # Proceed only if tests passed
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          git checkout main
-          git merge dev
-          git push origin main
-
+          pytest tests.py
