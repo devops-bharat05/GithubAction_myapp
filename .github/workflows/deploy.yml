@@ -1,0 +1,82 @@
+name: Deploy and Test on EC2
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          ref: dev  # Ensure we're working with the dev branch
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flask pytest requests  # Install dependencies for app and testing
+
+      - name: Run Tests Locally
+        run: |
+          pytest tests.py  # Run tests on GitHub runner
+      
+      - name: Deploy to EC2 and Set Up Environment
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
+          chmod 600 ec2_key.pem
+          
+          # Copy application code to EC2
+          scp -i ec2_key.pem -o StrictHostKeyChecking=no app.py $EC2_USER@$EC2_HOST:/home/$EC2_USER/app.py
+          
+          # SSH into EC2 to set up Python, Flask, and Gunicorn
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
+            # Update and install Python if necessary
+            sudo apt update
+            sudo apt install -y python3 python3-pip
+            
+            # Install Flask and Gunicorn
+            pip3 install --user flask gunicorn
+            
+            # Kill any existing app process and start app with Gunicorn
+            pkill -f gunicorn || true
+            nohup gunicorn -w 4 -b 0.0.0.0:5000 app:app --daemon &
+          EOF
+        shell: bash
+
+      - name: Run Tests on Deployed App
+        run: |
+          sleep 10  # Wait for the app to start
+          pytest tests.py  # Run tests against deployed app
+        env:
+          BASE_URL: "http://${{ secrets.EC2_HOST }}:5000"  # Update base URL for tests
+
+  merge:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: success()  # Run only if all previous steps succeeded
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Merge to Main Branch
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git checkout main
+          git merge dev
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
