@@ -33,6 +33,16 @@ jobs:
       - name: Run Tests
         run: |
           pytest tests.py
+      - name: Merge to Main if Tests Pass
+        if: success()  # Proceed only if tests passed
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git checkout main
+          git merge dev
+          git push origin main
 
   deploy_to_ec2:
     runs-on: ubuntu-latest
