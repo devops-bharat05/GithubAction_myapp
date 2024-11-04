@@ -18,7 +18,7 @@ jobs:
 
   test:
     needs: wait-for-setup
-    if: steps.setup-check.outcome == 'success'
+    if: needs.wait-for-setup.result == 'success'
     runs-on: ubuntu-latest
 
     steps:
