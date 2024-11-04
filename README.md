@@ -1,10 +1,10 @@
-# 🚀 CI/CD Pipeline for Flask Application using GitHub Actions
+# 🚀 CI/CD Pipeline for Flask Application using GitHub Actions 🚀
 
 This project sets up a Continuous Integration and Continuous Deployment (CI/CD) pipeline for a Flask application using GitHub Actions. The pipeline automatically tests, merges, and deploys code to an EC2 instance whenever changes are pushed to the `dev` branch.
 
 ## 📁 Project Structure
 
-```gra
+```
 .
 ├── .github
 │   └── workflows
@@ -50,14 +50,78 @@ on:
 jobs:
   test_and_merge:
     runs-on: ubuntu-latest
+
     steps:
-      ...
-      
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          ref: dev
+          fetch-depth: 0  # Fetch all branches to allow merging
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flask pytest requests  # Install dependencies for app and testing
+
+      - name: Start Flask Application
+        run: |
+          nohup python app.py &
+          sleep 5  # Give the app time to start
+
+      - name: Run Tests
+        run: |
+          pytest tests.py
+
+      - name: Merge to Main if Tests Pass
+        if: success()  # Proceed only if tests passed
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git checkout main
+          git merge dev
+          git push origin main
+
   deploy_to_ec2:
     runs-on: ubuntu-latest
-    needs: test_and_merge
+    needs: test_and_merge  # Run only if test_and_merge job succeeds
+
     steps:
-      ...
+      - name: Checkout Main Branch
+        uses: actions/checkout@v3
+        with:
+          ref: main  # Ensure we're deploying the main branch code
+          fetch-depth: 0  # Fetch all branches to ensure we have the latest changes
+
+      - name: Deploy to EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
+          chmod 600 ec2_key.pem
+          
+          # Copy application code to EC2
+          scp -i ec2_key.pem -o StrictHostKeyChecking=no app.py $EC2_USER@$EC2_HOST:/home/$EC2_USER/app.py
+          
+          # SSH into EC2 to set up environment and run the app
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
+            sudo apt update
+            sudo apt install -y python3 python3-pip
+            
+            # Install Flask and Gunicorn
+            pip3 install --user flask gunicorn
+            
+            # Kill any existing app process and start app with Gunicorn
+            pkill -f gunicorn || true
+            nohup gunicorn -w 4 -b 0.0.0.0:5000 app:app --daemon &
+          EOF
 ```
 
 ## 📦 Prerequisites
