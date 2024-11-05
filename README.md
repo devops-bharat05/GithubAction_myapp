@@ -166,10 +166,10 @@ Add the following secrets to your GitHub repository:
 
 - dev branch code
 ![Alt text](./imgs/github-action-branch-dev.png)
-- Githubaction workflow executions
+- Github Action workflow executes successfully
 ![Alt text](./imgs/github-actionworkflow.png)
-![Alt text](./imgs/github-actionworkflow.png)
-- Once githubaction workflow completes then dev branch is getting merged to main branch and same code is pushed to AWS ec2 instance
+![Alt text](./imgs/github-actionworkflow01.png)
+- After passing all the defined test cases, dev branch is getting merged to main branch and same code is pushed to AWS ec2 instance
 ![Alt text](./imgs/github-action-branch-main.png)
 ![Alt text](./imgs/app-running.png)
 ---
