@@ -162,4 +162,15 @@ Add the following secrets to your GitHub repository:
 
 4. Monitor the GitHub Actions tab in your repository to see the workflow in action!
 ---
+## Screenshots 📁
+
+- dev branch code
+![Alt text](./imgs/github-action-branch-dev.png)
+- Githubaction workflow executions
+![Alt text](./imgs/github-actionworkflow.png)
+![Alt text](./imgs/github-actionworkflow.png)
+- Once githubaction workflow completes then dev branch is getting merged to main branch and same code is pushed to AWS ec2 instance
+![Alt text](./imgs/github-action-branch-main.png)
+![Alt text](./imgs/app-running.png)
+---
 This setup allows for automated testing and deployment of your Flask application, streamlining your development process. Enjoy coding and deploying with confidence!
